@@ -1,4 +1,42 @@
-import Spline from '@splinetool/react-spline'
+import { useEffect, useState } from 'react'
+
+function ClientSpline({ scene }) {
+  const [SplineComp, setSplineComp] = useState(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    // Dynamically import only on client to avoid SSR/HMR edge cases
+    import('@splinetool/react-spline')
+      .then((mod) => {
+        if (mounted) setSplineComp(() => mod.default)
+      })
+      .catch(() => {
+        if (mounted) setFailed(true)
+      })
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  if (failed) {
+    return (
+      <div className="h-full w-full grid place-items-center text-slate-300/80">
+        3D preview unavailable on this device
+      </div>
+    )
+  }
+
+  if (!SplineComp) {
+    return (
+      <div className="h-full w-full grid place-items-center text-slate-300/60">
+        Loading 3D…
+      </div>
+    )
+  }
+
+  return <SplineComp scene={scene} style={{ width: '100%', height: '100%' }} />
+}
 
 function Hero() {
   return (
@@ -38,7 +76,7 @@ function Hero() {
           </div>
           <div className="relative h-[520px] md:h-[620px] lg:h-[700px]">
             <div className="absolute inset-0 rounded-3xl overflow-hidden border border-white/10 bg-slate-900/40">
-              <Spline scene="https://prod.spline.design/4JFCLsE5jz72cZzw/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+              <ClientSpline scene="https://prod.spline.design/4JFCLsE5jz72cZzw/scene.splinecode" />
             </div>
             <div className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
           </div>
